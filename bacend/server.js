@@ -3,6 +3,7 @@ import path from "path";
 const app = express();
 import morgan from "morgan";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 import cors from "cors";
 // import useParams from 'react-router-dom'
 dotenv.config();
@@ -16,6 +17,10 @@ import orderroutes from "./routes/orderRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 app.use(express.json());
 app.use(cors());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/images", express.static(path.join(__dirname, "images")));
+
 // if(process.env.NODE_ENV==='development'){
 // app.use(morgan('node'))
 // }
@@ -28,8 +33,8 @@ app.use("/api/users", useroutes);
 app.use("/api/orders", orderroutes);
 app.use("/api/upload", uploadRoutes);
 
-const __dirname = path.resolve();
-app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
+// __dirname = path.resolve();
+// app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 // app.use('/uploads', express.static('public'));
 
 if (process.env.NODE_ENV == "production") {
