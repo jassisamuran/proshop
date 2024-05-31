@@ -18,7 +18,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 app.use(express.json());
 app.use(cors());
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let __dirname = path.dirname(__filename);
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 // if(process.env.NODE_ENV==='development'){
@@ -33,9 +33,9 @@ app.use("/api/users", useroutes);
 app.use("/api/orders", orderroutes);
 app.use("/api/upload", uploadRoutes);
 
-// __dirname = path.resolve();
-// app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
-// app.use('/uploads', express.static('public'));
+__dirname = path.resolve();
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
+app.use("/uploads", express.static("public"));
 
 if (process.env.NODE_ENV == "production") {
   app.use(express.static(path.join(__dirname, "/proshop/build")));
