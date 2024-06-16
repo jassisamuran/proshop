@@ -28,14 +28,14 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, "uploads");
+const uploadDir = path.join(__dirname, "images");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, "images/");
+    cb(null, uploadDir); // Use absolute path
   },
   filename(req, file, cb) {
     cb(
@@ -70,8 +70,8 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
     console.log("No file uploaded.");
     return res.status(400).send("No file uploaded.");
   }
-  console.log(`File uploaded to: /${req.file.path}`);
-  res.send(`/${req.file.path}`);
+  console.log(`File uploaded to: /images/${req.file.filename}`);
+  res.send(`images/${req.file.filename}`);
 });
 
 app.use("/api/products", productRoutes);
