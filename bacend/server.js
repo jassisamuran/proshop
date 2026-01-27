@@ -1,79 +1,124 @@
+import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import path from "path";
-import morgan from "morgan";
-import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import multer from "multer";
-import cors from "cors";
-import fs from "fs";
 
 import connectDb from "./config/db.js";
-import products from "./data/product.js";
+import orderroutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import useroutes from "./routes/useroutes.js";
-import orderroutes from "./routes/orderRoutes.js";
-import uploadRoutes from "./routes/uploadRoutes.js";
 
 dotenv.config();
 connectDb();
-const app = express();
 
+const app = express();
 app.use(express.json());
 app.use(cors());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// storage for local
+// app.use("/images", express.static(path.join(__dirname, "images")));
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/images", express.static(path.join(__dirname, "images")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// // Ensure uploads directory exists
+// const uploadDir = path.join(__dirname, "images");
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir, { recursive: true });
+// }
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, "images");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// const storage = multer.diskStorage({
+//   destination(req, file, cb) {
+//     cb(null, uploadDir); // Use absolute path
+//   },
+//   filename(req, file, cb) {
+//     cb(
+//       null,
+//       `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+//     );
+//   },
+// });
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir); // Use absolute path
-  },
-  filename(req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+// const checkFileType = (file, cb) => {
+//   const filetypes = /jpg|jpeg|png/;
+//   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+//   const mimetype = filetypes.test(file.mimetype);
+
+//   if (extname && mimetype) {
+//     return cb(null, true);
+//   } else {
+//     cb("Images only!");
+//   }
+// };
+
+// const upload = multer({
+//   storage,
+//   fileFilter: function (req, file, cb) {
+//     checkFileType(file, cb);
+//   },
+// });
+
+// // Upload endpoint
+// app.post("/api/upload", upload.single("image"), (req, res) => {
+//   if (!req.file) {
+//     console.log("No file uploaded.");
+//     return res.status(400).send("No file uploaded.");
+//   }
+//   console.log(`File uploaded to: /images/${req.file.filename}`);
+//   res.send(`images/${req.file.filename}`);
+// });
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+});
+
+app.post("/api/upload", async (req, res) => {
+  try {
+    const { fileName, fileType } = req.body;
+
+    if (!fileName || !fileType) {
+      return res.status(400).json({ message: "Invalid file data" });
+    }
+
+    const key = `products/${Date.now()}-${fileName}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, {
+      expiresIn: 60,
+    });
+
+    res.json({
+      uploadUrl,
+      imageUrl: `https://${process.env.S3_BUCKET}.s3.amazonaws.com/${key}`,
+      imageKey: key,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Upload failed" });
+  }
+});
+
+app.delete("/api/image/:key", async (req, res) => {
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: req.params.key,
+      }),
     );
-  },
-});
 
-const checkFileType = (file, cb) => {
-  const filetypes = /jpg|jpeg|png/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb("Images only!");
+    res.json({ message: "Image deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Delete failed" });
   }
-};
-
-const upload = multer({
-  storage,
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  },
 });
-
-// Upload endpoint
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  if (!req.file) {
-    console.log("No file uploaded.");
-    return res.status(400).send("No file uploaded.");
-  }
-  console.log(`File uploaded to: /images/${req.file.filename}`);
-  res.send(`images/${req.file.filename}`);
-});
-
 app.use("/api/products", productRoutes);
 app.use("/api/users", useroutes);
 app.use("/api/orders", orderroutes);
@@ -89,5 +134,5 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const Port = process.env.PORT || 5000;
-app.listen(Port, () => console.log(`Server running on port ${Port}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
