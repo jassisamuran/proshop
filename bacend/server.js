@@ -4,11 +4,15 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import connectDb from "./config/db.js";
 import orderroutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import useroutes from "./routes/useroutes.js";
-
 dotenv.config();
 connectDb();
 
