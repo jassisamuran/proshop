@@ -3,15 +3,16 @@ import dotenv from "dotenv";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+dotenv.config();
 
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import connectDb from "./config/db.js";
 import orderroutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import useroutes from "./routes/useroutes.js";
-dotenv.config();
+import cloudinary from "./utils/cloudinary.js";
 connectDb();
-
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -104,21 +105,23 @@ const __dirname = path.dirname(__filename);
 //   }
 // });
 
-app.delete("/api/image/:key", async (req, res) => {
-  try {
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.S3_BUCKET,
-        Key: req.params.key,
-      }),
-    );
-
-    res.json({ message: "Image deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Delete failed" });
-  }
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "products",
+    allowed_formats: ["jpg", "png", "jpeg"],
+  },
 });
+
+const upload = multer({ storage });
+
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  res.json({
+    imageUrl: req.file.path,
+    imageId: req.file.filename,
+  });
+});
+
 app.use("/api/products", productRoutes);
 app.use("/api/users", useroutes);
 app.use("/api/orders", orderroutes);
