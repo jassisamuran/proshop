@@ -15,7 +15,14 @@ import cloudinary from "./utils/cloudinary.js";
 connectDb();
 const app = express();
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
+app.use(
+  cors({
+    origin: "https://your-frontend.vercel.app", // Replace with your actual Vercel URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,6 +123,8 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 app.post("/api/upload", upload.single("image"), (req, res) => {
+  console.log("Upload route hit", req.file); // <-- add this
+
   res.json({
     imageUrl: req.file.path,
     imageId: req.file.filename,
