@@ -18,7 +18,7 @@ app.use(express.json());
 // app.use(cors());
 app.use(
   cors({
-    origin: "https://ecommercefrontend-theta-lovat.vercel.app/",
+    origin: "https://ecommercefrontend-theta-lovat.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
