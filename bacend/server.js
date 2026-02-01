@@ -4,11 +4,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import {
-  DeleteObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import connectDb from "./config/db.js";
 import orderroutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -73,40 +69,40 @@ const __dirname = path.dirname(__filename);
 //   res.send(`images/${req.file.filename}`);
 // });
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-});
+// const s3 = new S3Client({
+//   region: process.env.AWS_REGION,
+// });
 
-app.post("/api/upload", async (req, res) => {
-  try {
-    const { fileName, fileType } = req.body;
+// app.post("/api/upload", async (req, res) => {
+//   try {
+//     const { fileName, fileType } = req.body;
 
-    if (!fileName || !fileType) {
-      return res.status(400).json({ message: "Invalid file data" });
-    }
+//     if (!fileName || !fileType) {
+//       return res.status(400).json({ message: "Invalid file data" });
+//     }
 
-    const key = `products/${Date.now()}-${fileName}`;
+//     const key = `products/${Date.now()}-${fileName}`;
 
-    const command = new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET,
-      Key: key,
-      ContentType: fileType,
-    });
+//     const command = new PutObjectCommand({
+//       Bucket: process.env.S3_BUCKET,
+//       Key: key,
+//       ContentType: fileType,
+//     });
 
-    const uploadUrl = await getSignedUrl(s3, command, {
-      expiresIn: 60,
-    });
+//     const uploadUrl = await getSignedUrl(s3, command, {
+//       expiresIn: 60,
+//     });
 
-    res.json({
-      uploadUrl,
-      imageUrl: `https://${process.env.S3_BUCKET}.s3.amazonaws.com/${key}`,
-      imageKey: key,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Upload failed" });
-  }
-});
+//     res.json({
+//       uploadUrl,
+//       imageUrl: `https://${process.env.S3_BUCKET}.s3.amazonaws.com/${key}`,
+//       imageKey: key,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Upload failed" });
+//   }
+// });
 
 app.delete("/api/image/:key", async (req, res) => {
   try {
