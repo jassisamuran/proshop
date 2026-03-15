@@ -103,6 +103,45 @@ const getOrders = asyncHandler(async (re, res) => {
   res.json(orders);
 });
 
+export const listOrders = asyncHandler(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+  const status = req.query.status;
+  const limit = Number(req.query.limit) || 50;
+  const sortBy = req.query.sort_by || "date_desc";
+
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - days);
+
+  let query = {
+    user: req.user._id,
+    createdAt: { $gte: fromDate },
+  };
+
+  if (status && status !== "all") {
+    query.status = status;
+  }
+
+  let sort = { createdAt: -1 };
+
+  if (sortBy === "date_asc") sort = { createdAt: 1 };
+  if (sortBy === "amount_desc") sort = { totalPrice: -1 };
+  if (sortBy === "amount_asc") sort = { totalPrice: 1 };
+
+  const orders = await Order.find(query).sort(sort).limit(limit).lean();
+
+  const formattedOrders = orders.map((order) => ({
+    id: order._id,
+    order_id: order._id,
+    status: order.status,
+    total_amount: order.totalPrice,
+    created_at: order.createdAt,
+    items: order.orderItems,
+  }));
+
+  res.json({
+    orders: formattedOrders,
+  });
+});
 const getOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   console.log("now is", order);
