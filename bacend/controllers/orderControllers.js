@@ -93,6 +93,53 @@ const updateOrderToDelivered = asyncHandler(async (re, res) => {
   }
 });
 
+const summariseOrders = async (userId, days) => {
+  try {
+    console.log("nows", days);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          user: userId,
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalRevenue: { $sum: "$totalPrice" },
+          avgOrderValue: { $avg: "$totalPrice" },
+        },
+      },
+    ]);
+
+    return (
+      result[0] || {
+        totalOrders: 0,
+        totalRevenue: 0,
+        avgOrderValue: 0,
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+const getOrderSummary = asyncHandler(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+
+  const summary = await summariseOrders(req.user._id, days);
+
+  res.json({
+    period_days: days,
+    total_orders: summary.totalOrders,
+    total_revenue: summary.totalRevenue,
+    avg_order_value: summary.avgOrderValue,
+  });
+});
 const getMyOrders = asyncHandler(async (re, res) => {
   const orders = await Order.find({ user: re.user._id });
   res.json(orders);
@@ -173,6 +220,7 @@ export {
   getOrderById,
   getOrders,
   getOrderStatus,
+  getOrderSummary,
   updateOrderToDelivered,
   updateOrderToPaid,
 };
