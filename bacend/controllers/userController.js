@@ -36,8 +36,6 @@ const registerUser = asyncHandler(async (re, res) => {
   });
   if (user) {
     const apiUrl = process.env.CHAT_BOAT_URI;
-
-    console.log("api", apiUrl, user);
     await axios.post(`${apiUrl}/api/v1/auth/user-created`, {
       external_user_id: user._id,
       name: user.name,
