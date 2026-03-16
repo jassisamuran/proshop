@@ -15,16 +15,14 @@ import cloudinary from "./utils/cloudinary.js";
 connectDb();
 const app = express();
 app.use(express.json());
-// app.use(cors());
 app.use(
   cors({
-    origin: ["https://ecommercefrontend-theta-lovat.vercel.app"],
+    origin: "https://ecommercefrontend-theta-lovat.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
-app.options("*", cors());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

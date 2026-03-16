@@ -41,7 +41,8 @@ const registerUser = asyncHandler(async (re, res) => {
       name: user.name,
       email: user.email,
     });
-    res.send(201).json({
+
+    return res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
