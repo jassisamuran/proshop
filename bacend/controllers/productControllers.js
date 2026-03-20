@@ -14,12 +14,28 @@ const getProducts = asyncHandler(async (re, res) => {
   res.json(products);
 });
 
+const getProductsByIds = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400);
+    throw new Error("ids must be a non-empty array");
+  }
+
+  const products = await Product.find({ _id: { $in: ids } });
+  console.log("now is product", products);
+  res.json({
+    count: products.length,
+    products,
+  });
+});
+
 const getProductsById = asyncHandler(async (re, res) => {
   const product = await Product.findById(re.params.id);
   // res.send("Hello world!");
   if (!product)
     res.send(
-      "<html> <head>server Response</head><body><h1> Nothing to see here</p></h1></body></html>"
+      "<html> <head>server Response</head><body><h1> Nothing to see here</p></h1></body></html>",
     );
   // console.log(product)
   res.json(product);
@@ -78,7 +94,7 @@ const createProductReview = asyncHandler(async (re, res) => {
   const product = await Product.findById(re.params.id);
   if (product) {
     const alreadyReviewed = product.reviews.find(
-      (r) => r.user.toString() === re.user._id.toString()
+      (r) => r.user.toString() === re.user._id.toString(),
     );
 
     // if(alreadyReviewed){
@@ -116,11 +132,12 @@ const createProductReview = asyncHandler(async (re, res) => {
 //  })
 
 export {
-  getProducts,
-  getProductsById,
-  deleteProduct,
-  updateProduct,
   createProduct,
   createProductReview,
+  deleteProduct,
+  getProducts,
+  getProductsById,
+  getProductsByIds,
   getTopProduct,
+  updateProduct,
 };
