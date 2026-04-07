@@ -114,7 +114,7 @@ The API is structured around users, products, and orders. All routes are prefixe
 | `PUT`  | `/:id/pay`          | Private | Mark an order as paid.                      |
 | `PUT`  | `/:id/deliver`      | Admin   | Mark an order as delivered.                 |
 
-### Upload Route (`/api/upload`)
+### Upload Route (`/api/upload`) 
 
 | Method | Endpoint   | Access  | Description                      |
 | :----- | :--------- | :------ | :------------------------------- |
